@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Chain Viewer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* ... [previous styles remain the same] ... */
+    </style>
+</head>
+<body class="p-4">
+    <!-- ... [previous HTML remains the same] ... -->
+    
+    <script>
+        // Add local storage to persist the data
+        let chainCount = 0;
+        let emailChains = [];
+
+        // Load saved chains on page load
+        window.onload = function() {
+            const savedChains = localStorage.getItem('emailChains');
+            if (savedChains) {
+                emailChains = JSON.parse(savedChains);
+                chainCount = emailChains.length;
+                emailChains.forEach((chain, index) => {
+                    displayChain(chain, index + 1);
+                });
+            }
+        }
+
+        function saveToLocalStorage() {
+            localStorage.setItem('emailChains', JSON.stringify(emailChains));
+        }
+
+        // ... [rest of the JavaScript remains similar but with storage added] ...
+
+        function addEmailChain() {
+            const input = document.getElementById('emailInput');
+            const content = input.value.trim();
+            
+            if (content) {
+                chainCount++;
+                const messages = cleanEmail(content);
+                
+                // Save to our array
+                emailChains.push(messages);
+                saveToLocalStorage();
+                
+                displayChain(messages, chainCount);
+                input.value = '';
+            }
+        }
+
+        function removeChain(id) {
+            document.getElementById(`chain-${id}`).remove();
+            document.getElementById(`nav-${id}`).remove();
+            emailChains.splice(id - 1, 1);
+            saveToLocalStorage();
+            chainCount--;
+            document.getElementById('chainCount').textContent = `${chainCount} conversation${chainCount !== 1 ? 's' : ''}`;
+        }
+
+        function clearAll() {
+            document.getElementById('chainContainer').innerHTML = '';
+            document.getElementById('navList').innerHTML = '';
+            chainCount = 0;
+            emailChains = [];
+            localStorage.removeItem('emailChains');
+            document.getElementById('chainCount').textContent = '0 conversations';
+        }
+    </script>
+</body>
+</html>
