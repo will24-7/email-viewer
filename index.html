@@ -3,45 +3,191 @@
 <head>
     <title>Email Chain Viewer</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .message {
+            white-space: pre-wrap;
+            border-radius: 1rem;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            max-width: 85%;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        
+        .message-sent {
+            background: #1e40af;
+            color: white;
+            margin-left: auto;
+        }
+        
+        .message-received {
+            background: #f8fafc;
+            margin-right: auto;
+        }
+
+        .chain-card {
+            transition: all 0.3s ease;
+        }
+
+        .chain-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+    </style>
 </head>
-<body class="bg-gray-100 p-8">
-    <div class="max-w-4xl mx-auto bg-white rounded-lg shadow p-6">
-        <h1 class="text-2xl font-bold mb-4">Email Chain Viewer</h1>
-        
-        <div class="mb-4">
-            <textarea 
-                id="emailInput" 
-                class="w-full h-32 border p-2 rounded"
-                placeholder="Paste your email chain here..."
-            ></textarea>
+<body class="bg-gray-100 p-4 md:p-8">
+    <div class="max-w-4xl mx-auto">
+        <!-- Header -->
+        <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+            <div class="flex items-center mb-4">
+                <i class="fas fa-envelope text-2xl text-blue-600 mr-3"></i>
+                <h1 class="text-2xl font-bold">Email Chain Viewer</h1>
+            </div>
+
+            <div class="space-y-4">
+                <textarea 
+                    id="emailInput" 
+                    class="w-full h-40 border-2 border-gray-200 p-4 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition"
+                    placeholder="Paste your email chain here..."
+                ></textarea>
+
+                <div class="flex gap-3">
+                    <button onclick="addEmailChain()" 
+                            class="flex-1 bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition flex items-center justify-center gap-2">
+                        <i class="fas fa-plus"></i>
+                        Add Email Chain
+                    </button>
+                    <button onclick="clearAll()" 
+                            class="bg-gray-100 text-gray-700 px-6 py-3 rounded-xl hover:bg-gray-200 transition flex items-center gap-2">
+                        <i class="fas fa-trash"></i>
+                        Clear All
+                    </button>
+                </div>
+            </div>
         </div>
-        
-        <button 
-            onclick="addEmailChain()"
-            class="bg-blue-500 text-white px-4 py-2 rounded"
-        >
-            Add Chain
-        </button>
-        
-        <div id="chainContainer" class="mt-4">
-            <!-- Chains will appear here -->
+
+        <!-- Stats -->
+        <div class="text-center mb-6">
+            <span id="chainCounter" class="text-gray-600 font-medium">0 email chains</span>
+        </div>
+
+        <!-- Chains Container -->
+        <div id="chainContainer" class="space-y-6">
+            <!-- Email chains will appear here -->
         </div>
     </div>
 
     <script>
+        let chainCount = 0;
+
+        function cleanEmail(text) {
+            let messages = text.split(/(?=From:|On .+wrote:|Begin forwarded message:)/).filter(Boolean);
+            
+            return messages.map(msg => {
+                msg = msg.replace(/^(From|To|Sent|Date|Subject|Cc|Bcc):.*?\n/gm, '');
+                msg = msg.replace(/^--\s*\n[\s\S]*?(?=\n|$)/gm, '');
+                msg = msg.replace(/Best regards,[\s\S]*?(?=\n|$)/gim, '');
+                msg = msg.replace(/Regards,[\s\S]*?(?=\n|$)/gim, '');
+                msg = msg.replace(/Thank you,[\s\S]*?(?=\n|$)/gim, '');
+                msg = msg.replace(/Thanks,[\s\S]*?(?=\n|$)/gim, '');
+                msg = msg.replace(/^>+\s*/gm, '');
+                msg = msg.replace(/On .+wrote:\n*/g, '');
+                msg = msg.replace(/\n{3,}/g, '\n\n').trim();
+                
+                return msg;
+            }).filter(msg => msg.length > 0);
+        }
+
         function addEmailChain() {
             const input = document.getElementById('emailInput');
             const content = input.value.trim();
             
             if (content) {
+                chainCount++;
+                document.getElementById('chainCounter').textContent = 
+                    `${chainCount} email chain${chainCount !== 1 ? 's' : ''}`;
+
+                const messages = cleanEmail(content);
+                const messagesHTML = messages.map((msg, idx) => `
+                    <div class="message ${idx % 2 === 0 ? 'message-received' : 'message-sent'}">
+                        ${msg.replace(/\n/g, '<br>')}
+                    </div>
+                `).join('');
+
                 const chainHTML = `
-                    <div class="bg-gray-50 p-4 rounded mt-4">
-                        ${content.replace(/\n/g, '<br>')}
+                    <div class="chain-card bg-white rounded-xl shadow-sm p-6" id="chain-${chainCount}">
+                        <div class="flex justify-between items-center mb-6 pb-4 border-b">
+                            <div>
+                                <h3 class="text-lg font-bold text-gray-800">Email Chain ${chainCount}</h3>
+                                <div class="text-sm text-gray-500">
+                                    ${messages.length} messages • ${new Date().toLocaleDateString()}
+                                </div>
+                            </div>
+                            <button 
+                                onclick="removeChain(${chainCount})"
+                                class="text-gray-400 hover:text-red-500 transition p-2 rounded-full hover:bg-red-50"
+                            >
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        ${messagesHTML}
                     </div>
                 `;
                 
                 document.getElementById('chainContainer').insertAdjacentHTML('afterbegin', chainHTML);
                 input.value = '';
+
+                // Save to localStorage
+                saveChains();
+            }
+        }
+
+        function removeChain(id) {
+            const chain = document.getElementById(`chain-${id}`);
+            if (chain) {
+                chain.style.opacity = '0';
+                chain.style.transform = 'translateY(10px)';
+                chain.style.transition = 'all 0.3s ease';
+                
+                setTimeout(() => {
+                    chain.remove();
+                    chainCount--;
+                    document.getElementById('chainCounter').textContent = 
+                        `${chainCount} email chain${chainCount !== 1 ? 's' : ''}`;
+                    saveChains();
+                }, 300);
+            }
+        }
+
+        function clearAll() {
+            const container = document.getElementById('chainContainer');
+            container.style.opacity = '0';
+            container.style.transition = 'all 0.3s ease';
+            
+            setTimeout(() => {
+                container.innerHTML = '';
+                container.style.opacity = '1';
+                chainCount = 0;
+                document.getElementById('chainCounter').textContent = '0 email chains';
+                localStorage.removeItem('emailChains');
+            }, 300);
+        }
+
+        function saveChains() {
+            const chains = document.getElementById('chainContainer').innerHTML;
+            localStorage.setItem('emailChains', chains);
+            localStorage.setItem('chainCount', chainCount);
+        }
+
+        // Load saved chains on page load
+        window.onload = function() {
+            const savedChains = localStorage.getItem('emailChains');
+            const savedCount = localStorage.getItem('chainCount');
+            if (savedChains && savedCount) {
+                document.getElementById('chainContainer').innerHTML = savedChains;
+                chainCount = parseInt(savedCount);
+                document.getElementById('chainCounter').textContent = 
+                    `${chainCount} email chain${chainCount !== 1 ? 's' : ''}`;
             }
         }
     </script>
