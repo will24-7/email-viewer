@@ -4,7 +4,7 @@
     <title>Email Conversation Analyzer</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
 
@@ -200,13 +200,13 @@
 
     <script>
         // Initialize Supabase client
+        const { createClient } = supabase;
         const supabaseUrl = 'https://zhodxnwzlxpmywnsokts.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpob2R4bnd6bHhwbXl3bnNva3RzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzA5NjAyNzUsImV4cCI6MjA0NjUzNjI3NX0.tomM3nzGpKRJ4pxC4O9s-QgInRf1eI-JtpYxQEiC3Lk';
-        const supabase = createClient(supabaseUrl, supabaseKey);
+        const supabaseClient = createClient(supabaseUrl, supabaseKey);
 
         let chainCount = 0;
 
-        // Update clock
         function updateClock() {
             const now = new Date();
             document.getElementById('currentTime').textContent = 
@@ -215,23 +215,18 @@
         setInterval(updateClock, 1000);
         updateClock();
 
-        // Show/hide loading screen
         function toggleLoading(show) {
             document.getElementById('loading').classList.toggle('hidden', !show);
         }
 
         function cleanEmail(text) {
-            // Split into messages
             let messages = text.split(/(?=On [A-Za-z]{3},? [A-Za-z]{3} \d{1,2}, \d{4}|On \d{1,2}\/\d{1,2}\/\d{2,4}|From:|Begin forwarded message:|>)/g);
             
             return messages.map(msg => {
-                // Remove email headers
                 msg = msg.replace(/^(From|To|Sent|Date|Subject|Cc|Bcc):.*$/gm, '');
                 msg = msg.replace(/Begin forwarded message:.*$/gm, '');
                 msg = msg.replace(/On .* wrote:$/gm, '');
                 msg = msg.replace(/On .* at .*, .* wrote:$/gm, '');
-                
-                // Remove signatures and footers
                 msg = msg.replace(/^--\s*\n[\s\S]*?(?=\n|$)/gm, '');
                 msg = msg.replace(/Best regards,[\s\S]*?(?=\n|$)/gim, '');
                 msg = msg.replace(/Regards,[\s\S]*?(?=\n|$)/gim, '');
@@ -241,8 +236,6 @@
                 msg = msg.replace(/This email and any attachments.*$/gm, '');
                 msg = msg.replace(/CONFIDENTIALITY NOTICE:.*$/gm, '');
                 msg = msg.replace(/Disclaimer:.*$/gm, '');
-                
-                // Clean up whitespace
                 msg = msg.replace(/\n{3,}/g, '\n\n');
                 return msg.trim();
             }).filter(msg => msg.length > 0);
@@ -258,8 +251,7 @@
                 try {
                     const messages = cleanEmail(content);
                     
-                    // Save to Supabase
-                    const { data, error } = await supabase
+                    const { data, error } = await supabaseClient
                         .from('email_chains')
                         .insert([
                             { 
@@ -271,7 +263,6 @@
 
                     if (error) throw error;
 
-                    // Create HTML for the new chain
                     const conversationHTML = messages.map((msg, idx) => `
                         <div class="message-block ${idx % 2 === 0 ? 'message-received' : 'message-sent'}">
                             <div class="message-arrow"></div>
@@ -323,7 +314,7 @@
             toggleLoading(true);
             
             try {
-                const { data, error } = await supabase
+                const { data, error } = await supabaseClient
                     .from('email_chains')
                     .select('*')
                     .order('created_at', { ascending: false });
@@ -371,13 +362,13 @@
                     `System Active - ${chainCount} Chain${chainCount !== 1 ? 's' : ''} Processed`;
             } catch (error) {
                 console.error('Error:', error);
-                alert('Failed to load email chains. Please refresh the page.');
+                document.getElementById('chainCounter').textContent = 'System Error - Failed to load chains';
             } finally {
                 toggleLoading(false);
             }
         }
 
-        // Load chains when page loads
+        // Initialize the app when the DOM is loaded
         document.addEventListener('DOMContentLoaded', loadChains);
     </script>
 </body>
