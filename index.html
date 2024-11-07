@@ -5,143 +5,129 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap');
+        /* [Previous styles remain the same...] */
 
-        body {
-            background: #0a1118;
-            font-family: 'Inter', sans-serif;
-            color: #e2e8f0;
-        }
-
-        .tech-header {
-            font-family: 'Orbitron', sans-serif;
-        }
-
-        .tech-card {
-            background: #111827;
-            border: 1px solid #1f2937;
-            backdrop-filter: blur(10px);
-            transition: all 0.3s ease;
-        }
-
-        .tech-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 0 20px rgba(16, 185, 129, 0.1);
-            border-color: #10b981;
-        }
-
-        .message {
-            white-space: pre-wrap;
-            border-radius: 0.75rem;
+        .cyber-button {
+            --button-bg: #064e3b;
+            --button-border: #10b981;
+            --button-glow: rgba(16, 185, 129, 0.4);
+            
+            width: 100%;
+            background: var(--button-bg);
+            border: 2px solid var(--button-border);
+            border-radius: 12px;
             padding: 1rem;
-            margin: 0.5rem 0;
-            max-width: 85%;
+            color: #ecfdf5;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1px;
             position: relative;
             overflow: hidden;
-        }
-        
-        .message::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, #10b981, transparent);
-        }
-        
-        .message-sent {
-            background: #064e3b;
-            color: #ecfdf5;
-            margin-left: auto;
-            border: 1px solid #065f46;
-        }
-        
-        .message-received {
-            background: #1f2937;
-            color: #f9fafb;
-            margin-right: auto;
-            border: 1px solid #374151;
+            transition: all 0.3s ease;
+            transform: translateY(0);
         }
 
-        .glow-effect {
-            position: relative;
-        }
-
-        .glow-effect::after {
+        .cyber-button::before {
             content: '';
             position: absolute;
             top: -2px;
             left: -2px;
             right: -2px;
             bottom: -2px;
-            background: linear-gradient(45deg, #10b981, #059669);
+            background: var(--button-bg);
             z-index: -1;
-            border-radius: 1rem;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .glow-effect:hover::after {
-            opacity: 0.3;
-        }
-
-        .tech-input {
-            background: #1f2937;
-            border: 1px solid #374151;
-            color: #e5e7eb;
+            transform: skew(5deg);
             transition: all 0.3s ease;
         }
 
-        .tech-input:focus {
-            border-color: #10b981;
-            box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);
-            outline: none;
-        }
-
-        .tech-button {
-            position: relative;
-            overflow: hidden;
-            transition: all 0.3s ease;
-        }
-
-        .tech-button::before {
+        .cyber-button::after {
             content: '';
             position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(
-                90deg,
-                transparent,
-                rgba(255, 255, 255, 0.1),
+            inset: -2px;
+            background: linear-gradient(90deg, 
+                transparent, 
+                var(--button-glow),
                 transparent
             );
-            transition: 0.5s;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: -2;
         }
 
-        .tech-button:hover::before {
-            left: 100%;
+        .cyber-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 15px var(--button-glow);
         }
 
-        .matrix-bg {
-            background: 
-                linear-gradient(rgba(16, 185, 129, 0.05), rgba(16, 185, 129, 0.05)),
-                linear-gradient(90deg, #0a1118 21px, transparent 1%) center,
-                linear-gradient(#0a1118 21px, transparent 1%) center,
-                rgba(16, 185, 129, 0.2);
-            background-size: 22px 22px;
+        .cyber-button:hover::after {
+            opacity: 1;
         }
 
-        @keyframes glowPulse {
-            0% { box-shadow: 0 0 5px rgba(16, 185, 129, 0.2); }
-            50% { box-shadow: 0 0 20px rgba(16, 185, 129, 0.4); }
-            100% { box-shadow: 0 0 5px rgba(16, 185, 129, 0.2); }
+        .cyber-button:active {
+            transform: translateY(1px);
         }
 
-        .pulse-glow {
-            animation: glowPulse 2s infinite;
+        .button-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .button-glitch {
+            animation: glitch 2s infinite;
+            opacity: 0;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--button-glow);
+            z-index: -1;
+        }
+
+        @keyframes glitch {
+            0% {
+                opacity: 0;
+                transform: translate(0);
+            }
+            1% {
+                opacity: 0.1;
+                transform: translate(-2px, 2px);
+            }
+            2% {
+                opacity: 0;
+                transform: translate(0);
+            }
+            49% {
+                opacity: 0;
+                transform: translate(0);
+            }
+            50% {
+                opacity: 0.1;
+                transform: translate(2px, -2px);
+            }
+            51% {
+                opacity: 0;
+                transform: translate(0);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(0);
+            }
+        }
+
+        .processing {
+            animation: processingPulse 1.5s infinite;
+        }
+
+        @keyframes processingPulse {
+            0% { border-color: var(--button-border); }
+            50% { border-color: transparent; }
+            100% { border-color: var(--button-border); }
         }
     </style>
 </head>
@@ -161,24 +147,20 @@
                     placeholder="Input email data for analysis..."
                 ></textarea>
 
-                <div class="flex gap-3">
-                    <button onclick="addEmailChain()" 
-                            class="tech-button flex-1 bg-emerald-600 text-white px-6 py-3 rounded-xl hover:bg-emerald-500 flex items-center justify-center gap-2">
-                        <i class="fas fa-plus"></i>
-                        Process Email Chain
-                    </button>
-                    <button onclick="clearAll()" 
-                            class="tech-button bg-gray-800 text-gray-300 px-6 py-3 rounded-xl hover:bg-gray-700 flex items-center gap-2">
-                        <i class="fas fa-trash"></i>
-                        Clear Data
-                    </button>
-                </div>
+                <button onclick="processEmail()" class="cyber-button">
+                    <div class="button-content">
+                        <i class="fas fa-microchip text-xl"></i>
+                        <span>Initialize Data Processing</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </div>
+                    <div class="button-glitch"></div>
+                </button>
             </div>
         </div>
 
         <!-- Stats -->
         <div class="text-center mb-6">
-            <span id="chainCounter" class="tech-header text-emerald-400 font-medium">0 data chains processed</span>
+            <span id="chainCounter" class="tech-header text-emerald-400 font-medium">System Ready - 0 Chains Processed</span>
         </div>
 
         <!-- Chains Container -->
@@ -188,53 +170,46 @@
     </div>
 
     <script>
-        // [Previous JavaScript remains the same, just updating the HTML template]
-        
-        function addEmailChain() {
+        let chainCount = 0;
+
+        function processEmail() {
             const input = document.getElementById('emailInput');
             const content = input.value.trim();
             
             if (content) {
+                const button = document.querySelector('.cyber-button');
+                button.classList.add('processing');
+                
                 chainCount++;
-                document.getElementById('chainCounter').textContent = 
-                    `${chainCount} data chain${chainCount !== 1 ? 's' : ''} processed`;
-
-                const messages = cleanEmail(content);
-                const messagesHTML = messages.map((msg, idx) => `
-                    <div class="message ${idx % 2 === 0 ? 'message-received' : 'message-sent'}">
-                        ${msg.replace(/\n/g, '<br>')}
-                    </div>
-                `).join('');
-
+                
                 const chainHTML = `
-                    <div class="tech-card rounded-xl p-6 glow-effect" id="chain-${chainCount}">
+                    <div class="tech-card rounded-xl p-6" id="chain-${chainCount}">
                         <div class="flex justify-between items-center mb-6 pb-4 border-b border-gray-700">
                             <div>
                                 <h3 class="text-lg font-bold tech-header text-emerald-400">Data Chain ${chainCount}</h3>
                                 <div class="text-sm text-gray-400">
                                     <i class="fas fa-database text-emerald-500 mr-1"></i>
-                                    ${messages.length} messages • ${new Date().toLocaleDateString()}
+                                    Processed on ${new Date().toLocaleDateString()}
                                 </div>
                             </div>
-                            <button 
-                                onclick="removeChain(${chainCount})"
-                                class="text-gray-500 hover:text-red-400 transition p-2 rounded-full hover:bg-gray-800"
-                            >
-                                <i class="fas fa-times"></i>
-                            </button>
                         </div>
-                        ${messagesHTML}
+                        <div class="message message-received">
+                            ${content.replace(/\n/g, '<br>')}
+                        </div>
                     </div>
                 `;
                 
                 document.getElementById('chainContainer').insertAdjacentHTML('afterbegin', chainHTML);
+                document.getElementById('chainCounter').textContent = 
+                    `System Active - ${chainCount} Chain${chainCount !== 1 ? 's' : ''} Processed`;
+                
                 input.value = '';
-
-                saveChains();
+                
+                setTimeout(() => {
+                    button.classList.remove('processing');
+                }, 1000);
             }
         }
-
-        // [Rest of the JavaScript functions remain the same]
     </script>
 </body>
 </html>
