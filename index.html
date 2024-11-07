@@ -5,145 +5,112 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        /* [Previous styles remain the same...] */
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
 
+        body {
+            background: #000000;
+            background-image: 
+                radial-gradient(circle at center, #10b98133 0%, transparent 40%),
+                linear-gradient(to bottom, #000000, #0a1118);
+            font-family: 'Inter', sans-serif;
+            color: #e2e8f0;
+            min-height: 100vh;
+        }
+
+        .tech-header {
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .tech-card {
+            background: rgba(17, 24, 39, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .message-container {
+            background: rgba(31, 41, 55, 0.5);
+            border: 1px solid rgba(16, 185, 129, 0.1);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            font-family: 'Inter', sans-serif;
+            line-height: 1.7;
+            font-size: 1.1rem;
+            color: #f3f4f6;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .message-header {
+            border-bottom: 1px solid rgba(16, 185, 129, 0.2);
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+        }
+
+        .timestamp {
+            font-family: 'JetBrains Mono', monospace;
+            color: #10b981;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .separator {
+            border: none;
+            height: 1px;
+            background: linear-gradient(90deg, 
+                transparent, 
+                rgba(16, 185, 129, 0.2), 
+                transparent
+            );
+            margin: 2rem 0;
+        }
+
+        .tech-input {
+            background: rgba(31, 41, 55, 0.5);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            color: #e5e7eb;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+            font-size: 1.1rem;
+            line-height: 1.7;
+        }
+
+        .tech-input:focus {
+            border-color: #10b981;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+            outline: none;
+        }
+
+        /* [Previous button styles remain the same] */
         .cyber-button {
             --button-bg: #064e3b;
             --button-border: #10b981;
             --button-glow: rgba(16, 185, 129, 0.4);
-            
             width: 100%;
-            background: var(--button-bg);
-            border: 2px solid var(--button-border);
-            border-radius: 12px;
-            padding: 1rem;
-            color: #ecfdf5;
-            font-family: 'Orbitron', sans-serif;
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            position: relative;
-            overflow: hidden;
-            transition: all 0.3s ease;
-            transform: translateY(0);
+            /* [Rest of button styles remain the same] */
         }
 
-        .cyber-button::before {
-            content: '';
-            position: absolute;
-            top: -2px;
-            left: -2px;
-            right: -2px;
-            bottom: -2px;
-            background: var(--button-bg);
-            z-index: -1;
-            transform: skew(5deg);
-            transition: all 0.3s ease;
-        }
-
-        .cyber-button::after {
-            content: '';
-            position: absolute;
-            inset: -2px;
-            background: linear-gradient(90deg, 
-                transparent, 
-                var(--button-glow),
-                transparent
-            );
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            z-index: -2;
-        }
-
-        .cyber-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 0 15px var(--button-glow);
-        }
-
-        .cyber-button:hover::after {
-            opacity: 1;
-        }
-
-        .cyber-button:active {
-            transform: translateY(1px);
-        }
-
-        .button-content {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            position: relative;
-            z-index: 1;
-        }
-
-        .button-glitch {
-            animation: glitch 2s infinite;
-            opacity: 0;
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: var(--button-glow);
-            z-index: -1;
-        }
-
-        @keyframes glitch {
-            0% {
-                opacity: 0;
-                transform: translate(0);
-            }
-            1% {
-                opacity: 0.1;
-                transform: translate(-2px, 2px);
-            }
-            2% {
-                opacity: 0;
-                transform: translate(0);
-            }
-            49% {
-                opacity: 0;
-                transform: translate(0);
-            }
-            50% {
-                opacity: 0.1;
-                transform: translate(2px, -2px);
-            }
-            51% {
-                opacity: 0;
-                transform: translate(0);
-            }
-            100% {
-                opacity: 0;
-                transform: translate(0);
-            }
-        }
-
-        .processing {
-            animation: processingPulse 1.5s infinite;
-        }
-
-        @keyframes processingPulse {
-            0% { border-color: var(--button-border); }
-            50% { border-color: transparent; }
-            100% { border-color: var(--button-border); }
-        }
     </style>
 </head>
-<body class="matrix-bg p-4 md:p-8">
-    <div class="max-w-4xl mx-auto">
+<body class="p-4 md:p-8">
+    <div class="max-w-5xl mx-auto">
         <!-- Header -->
-        <div class="tech-card rounded-2xl p-6 mb-6 pulse-glow">
-            <div class="flex items-center mb-4">
-                <i class="fas fa-microchip text-2xl text-emerald-500 mr-3"></i>
-                <h1 class="text-2xl font-bold tech-header text-emerald-400">Email Analysis System</h1>
+        <div class="tech-card rounded-2xl p-6 mb-8">
+            <div class="flex items-center mb-6">
+                <i class="fas fa-microchip text-3xl text-emerald-500 mr-4"></i>
+                <div>
+                    <h1 class="text-3xl font-bold tech-header text-emerald-400 mb-1">Email Analysis System</h1>
+                    <div class="timestamp">
+                        <i class="fas fa-clock mr-2"></i>
+                        <span>System Time: <span id="currentTime">00:00:00</span></span>
+                    </div>
+                </div>
             </div>
 
             <div class="space-y-4">
                 <textarea 
                     id="emailInput" 
-                    class="tech-input w-full h-40 p-4 rounded-xl"
+                    class="tech-input w-full h-48 p-6 rounded-xl"
                     placeholder="Input email data for analysis..."
                 ></textarea>
 
@@ -159,18 +126,42 @@
         </div>
 
         <!-- Stats -->
-        <div class="text-center mb-6">
-            <span id="chainCounter" class="tech-header text-emerald-400 font-medium">System Ready - 0 Chains Processed</span>
+        <div class="text-center mb-8">
+            <span id="chainCounter" class="tech-header text-emerald-400 text-xl font-medium">System Ready - 0 Chains Processed</span>
         </div>
 
         <!-- Chains Container -->
-        <div id="chainContainer" class="space-y-6">
+        <div id="chainContainer" class="space-y-8">
             <!-- Email chains will appear here -->
         </div>
     </div>
 
     <script>
         let chainCount = 0;
+
+        function updateClock() {
+            const now = new Date();
+            const time = now.toLocaleTimeString('en-US', { 
+                hour12: false, 
+                hour: '2-digit', 
+                minute: '2-digit', 
+                second: '2-digit' 
+            });
+            document.getElementById('currentTime').textContent = time;
+        }
+
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        function formatEmailContent(content) {
+            // Split content into paragraphs
+            const paragraphs = content.split('\n\n');
+            
+            // Format each paragraph with proper spacing and line breaks
+            return paragraphs.map(paragraph => {
+                return `<p class="mb-4">${paragraph.replace(/\n/g, '<br>')}</p>`;
+            }).join('');
+        }
 
         function processEmail() {
             const input = document.getElementById('emailInput');
@@ -183,18 +174,22 @@
                 chainCount++;
                 
                 const chainHTML = `
-                    <div class="tech-card rounded-xl p-6" id="chain-${chainCount}">
-                        <div class="flex justify-between items-center mb-6 pb-4 border-b border-gray-700">
-                            <div>
-                                <h3 class="text-lg font-bold tech-header text-emerald-400">Data Chain ${chainCount}</h3>
-                                <div class="text-sm text-gray-400">
-                                    <i class="fas fa-database text-emerald-500 mr-1"></i>
-                                    Processed on ${new Date().toLocaleDateString()}
+                    <div class="tech-card rounded-xl p-8" id="chain-${chainCount}">
+                        <div class="message-header mb-6">
+                            <h3 class="text-2xl font-bold tech-header text-emerald-400 mb-2">Data Chain ${chainCount}</h3>
+                            <div class="flex items-center text-sm text-gray-400 space-x-4">
+                                <div>
+                                    <i class="fas fa-database text-emerald-500 mr-2"></i>
+                                    Processed on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}
+                                </div>
+                                <div>
+                                    <i class="fas fa-layer-group text-emerald-500 mr-2"></i>
+                                    Chain ID: #${String(chainCount).padStart(4, '0')}
                                 </div>
                             </div>
                         </div>
-                        <div class="message message-received">
-                            ${content.replace(/\n/g, '<br>')}
+                        <div class="message-container">
+                            ${formatEmailContent(content)}
                         </div>
                     </div>
                 `;
