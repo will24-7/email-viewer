@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Email Conversation Analyzer</title>
+    <title>Email Analysis System</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
 
@@ -188,7 +188,7 @@
         <!-- Stats -->
         <div class="text-center mb-8">
             <span id="chainCounter" class="tech-header text-emerald-400 text-xl font-medium">
-                System Ready - Loading Chains...
+                System Ready
             </span>
         </div>
 
@@ -197,14 +197,19 @@
             <!-- Email chains will appear here -->
         </div>
     </div>
-
     <script>
-        // Initialize Supabase client
+        // Initialize Supabase client with window object
         const supabaseUrl = 'https://zhodxnwzlxpmywnsokts.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpob2R4bnd6bHhwbXl3bnNva3RzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzA5NjAyNzUsImV4cCI6MjA0NjUzNjI3NX0.tomM3nzGpKRJ4pxC4O9s-QgInRf1eI-JtpYxQEiC3Lk';
-        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
         let chainCount = 0;
+
+        // Hide loading screen on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            toggleLoading(false);
+            loadChains(); // Load existing chains
+        });
 
         // Update clock
         function updateClock() {
@@ -269,7 +274,10 @@
                         ])
                         .select();
 
-                    if (error) throw error;
+                    if (error) {
+                        console.error('Supabase error:', error);
+                        throw error;
+                    }
 
                     // Create HTML for the new chain
                     const conversationHTML = messages.map((msg, idx) => `
@@ -319,10 +327,7 @@
             }
         }
 
-        // Load existing chains
         async function loadChains() {
-            toggleLoading(true);
-            
             try {
                 const { data, error } = await supabase
                     .from('email_chains')
@@ -333,22 +338,49 @@
 
                 chainCount = data.length;
                 
-                const chainsHTML = data.map((chain, index) => {
-                    const conversationHTML = chain.messages.map((msg, idx) => `
-                        <div class="message-block ${idx % 2 === 0 ? 'message-received' : 'message-sent'}">
-                            <div class="message-arrow"></div>
-                            <div class="text-sm text-emerald-400 mb-2">
-                                <i class="fas ${idx % 2 === 0 ? 'fa-arrow-right' : 'fa-arrow-left'} mr-2"></i>
-                                Message ${idx + 1}
+                if (chainCount > 0) {
+                    const chainsHTML = data.map((chain, index) => {
+                        const conversationHTML = chain.messages.map((msg, idx) => `
+                            <div class="message-block ${idx % 2 === 0 ? 'message-received' : 'message-sent'}">
+                                <div class="message-arrow"></div>
+                                <div class="text-sm text-emerald-400 mb-2">
+                                    <i class="fas ${idx % 2 === 0 ? 'fa-arrow-right' : 'fa-arrow-left'} mr-2"></i>
+                                    Message ${idx + 1}
+                                </div>
+                                <div class="message-content">${msg}</div>
                             </div>
-                            <div class="message-content">${msg}</div>
-                        </div>
-                    `).join('');
+                        `).join('');
 
-                    return `
-                        <div class="tech-card rounded-xl p-8" id="chain-${index + 1}">
-                            <div class="mb-6 pb-4 border-b border-emerald-900">
-                                <h3 class="text-2xl font-bold tech-header text-emerald-400 mb-2">
-                                    Conversation ${index + 1}
-                                </h3>
-                                <div class="flex items-center text-sm text-gray-400
+                        return `
+                            <div class="tech-card rounded-xl p-8" id="chain-${index + 1}">
+                                <div class="mb-6 pb-4 border-b border-emerald-900">
+                                    <h3 class="text-2xl font-bold tech-header text-emerald-400 mb-2">
+                                        Conversation ${index + 1}
+                                    </h3>
+                                    <div class="flex items-center text-sm text-gray-400 space-x-4">
+                                        <div>
+                                            <i class="fas fa-clock text-emerald-500 mr-2"></i>
+                                            ${new Date(chain.created_at).toLocaleString()}
+                                        </div>
+                                        <div>
+                                            <i class="fas fa-comments text-emerald-500 mr-2"></i>
+                                            ${chain.messages.length} messages
+                                        </div>
+                                    </div>
+                                </div>
+                                ${conversationHTML}
+                            </div>
+                        `;
+                    }).join('');
+
+                    document.getElementById('chainContainer').innerHTML = chainsHTML;
+                    document.getElementById('chainCounter').textContent = 
+                        `System Active - ${chainCount} Chain${chainCount !== 1 ? 's' : ''} Processed`;
+                }
+            } catch (error) {
+                console.error('Error loading chains:', error);
+            }
+        }
+    </script>
+</body>
+</html>
