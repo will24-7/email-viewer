@@ -200,10 +200,9 @@
 
     <script>
         // Initialize Supabase client
-        const { createClient } = supabase;
         const supabaseUrl = 'https://zhodxnwzlxpmywnsokts.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpob2R4bnd6bHhwbXl3bnNva3RzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzA5NjAyNzUsImV4cCI6MjA0NjUzNjI3NX0.tomM3nzGpKRJ4pxC4O9s-QgInRf1eI-JtpYxQEiC3Lk';
-        const supabaseClient = createClient(supabaseUrl, supabaseKey);
+        const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
         let chainCount = 0;
 
@@ -216,27 +215,50 @@
         updateClock();
 
         function toggleLoading(show) {
-            document.getElementById('loading').classList.toggle('hidden', !show);
+            const loadingElement = document.getElementById('loading');
+            if (show) {
+                loadingElement.classList.remove('hidden');
+                setTimeout(() => {
+                    if (!loadingElement.classList.contains('hidden')) {
+                        loadingElement.classList.add('hidden');
+                        alert('Operation timed out. Please try again.');
+                    }
+                }, 30000);
+            } else {
+                loadingElement.classList.add('hidden');
+            }
+        }
+
+        function sanitizeHTML(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
         }
 
         function cleanEmail(text) {
+            if (!text) return [];
+            
             let messages = text.split(/(?=On [A-Za-z]{3},? [A-Za-z]{3} \d{1,2}, \d{4}|On \d{1,2}\/\d{1,2}\/\d{2,4}|From:|Begin forwarded message:|>)/g);
             
             return messages.map(msg => {
-                msg = msg.replace(/^(From|To|Sent|Date|Subject|Cc|Bcc):.*$/gm, '');
-                msg = msg.replace(/Begin forwarded message:.*$/gm, '');
-                msg = msg.replace(/On .* wrote:$/gm, '');
-                msg = msg.replace(/On .* at .*, .* wrote:$/gm, '');
-                msg = msg.replace(/^--\s*\n[\s\S]*?(?=\n|$)/gm, '');
-                msg = msg.replace(/Best regards,[\s\S]*?(?=\n|$)/gim, '');
-                msg = msg.replace(/Regards,[\s\S]*?(?=\n|$)/gim, '');
-                msg = msg.replace(/Thank you,[\s\S]*?(?=\n|$)/gim, '');
-                msg = msg.replace(/Thanks,[\s\S]*?(?=\n|$)/gim, '');
-                msg = msg.replace(/^>+\s*/gm, '');
-                msg = msg.replace(/This email and any attachments.*$/gm, '');
-                msg = msg.replace(/CONFIDENTIALITY NOTICE:.*$/gm, '');
-                msg = msg.replace(/Disclaimer:.*$/gm, '');
-                msg = msg.replace(/\n{3,}/g, '\n\n');
+                if (!msg.trim()) return '';
+                
+                msg = msg
+                    .replace(/^(From|To|Sent|Date|Subject|Cc|Bcc):.*$/gm, '')
+                    .replace(/Begin forwarded message:.*$/gm, '')
+                    .replace(/On .* wrote:$/gm, '')
+                    .replace(/On .* at .*, .* wrote:$/gm, '')
+                    .replace(/^--\s*\n[\s\S]*?(?=\n|$)/gm, '')
+                    .replace(/Best regards,[\s\S]*?(?=\n|$)/gim, '')
+                    .replace(/Regards,[\s\S]*?(?=\n|$)/gim, '')
+                    .replace(/Thank you,[\s\S]*?(?=\n|$)/gim, '')
+                    .replace(/Thanks,[\s\S]*?(?=\n|$)/gim, '')
+                    .replace(/^>+\s*/gm, '')
+                    .replace(/This email and any attachments.*$/gm, '')
+                    .replace(/CONFIDENTIALITY NOTICE:.*$/gm, '')
+                    .replace(/Disclaimer:.*$/gm, '')
+                    .replace(/\n{3,}/g, '\n\n');
+                    
                 return msg.trim();
             }).filter(msg => msg.length > 0);
         }
@@ -245,68 +267,73 @@
             const input = document.getElementById('emailInput');
             const content = input.value.trim();
             
-            if (content) {
-                toggleLoading(true);
+            if (!content) {
+                alert('Please enter email content');
+                return;
+            }
+
+            toggleLoading(true);
+            
+            try {
+                const messages = cleanEmail(content);
                 
-                try {
-                    const messages = cleanEmail(content);
-                    
-                    const { data, error } = await supabaseClient
-                        .from('email_chains')
-                        .insert([
-                            { 
-                                content: { original: content },
-                                messages: messages
-                            }
-                        ])
-                        .select();
+                if (messages.length === 0) {
+                    throw new Error('No valid messages found in the email content');
+                }
 
-                    if (error) throw error;
+                const { data, error } = await supabaseClient
+                    .from('email_chains')
+                    .insert([{
+                        content: { original: content },
+                        messages: messages
+                    }])
+                    .select();
 
-                    const conversationHTML = messages.map((msg, idx) => `
-                        <div class="message-block ${idx % 2 === 0 ? 'message-received' : 'message-sent'}">
-                            <div class="message-arrow"></div>
-                            <div class="text-sm text-emerald-400 mb-2">
-                                <i class="fas ${idx % 2 === 0 ? 'fa-arrow-right' : 'fa-arrow-left'} mr-2"></i>
-                                Message ${idx + 1}
-                            </div>
-                            <div class="message-content">${msg}</div>
+                if (error) throw error;
+
+                const conversationHTML = messages.map((msg, idx) => `
+                    <div class="message-block ${idx % 2 === 0 ? 'message-received' : 'message-sent'}">
+                        <div class="message-arrow"></div>
+                        <div class="text-sm text-emerald-400 mb-2">
+                            <i class="fas ${idx % 2 === 0 ? 'fa-arrow-right' : 'fa-arrow-left'} mr-2"></i>
+                            Message ${idx + 1}
                         </div>
-                    `).join('');
+                        <div class="message-content">${sanitizeHTML(msg)}</div>
+                    </div>
+                `).join('');
 
-                    const chainHTML = `
-                        <div class="tech-card rounded-xl p-8" id="chain-${chainCount + 1}">
-                            <div class="mb-6 pb-4 border-b border-emerald-900">
-                                <h3 class="text-2xl font-bold tech-header text-emerald-400 mb-2">
-                                    Conversation ${chainCount + 1}
-                                </h3>
-                                <div class="flex items-center text-sm text-gray-400 space-x-4">
-                                    <div>
-                                        <i class="fas fa-clock text-emerald-500 mr-2"></i>
-                                        ${new Date().toLocaleString()}
-                                    </div>
-                                    <div>
-                                        <i class="fas fa-comments text-emerald-500 mr-2"></i>
-                                        ${messages.length} messages
-                                    </div>
+                const chainHTML = `
+                    <div class="tech-card rounded-xl p-8" id="chain-${chainCount + 1}">
+                        <div class="mb-6 pb-4 border-b border-emerald-900">
+                            <h3 class="text-2xl font-bold tech-header text-emerald-400 mb-2">
+                                Conversation ${chainCount + 1}
+                            </h3>
+                            <div class="flex items-center text-sm text-gray-400 space-x-4">
+                                <div>
+                                    <i class="fas fa-clock text-emerald-500 mr-2"></i>
+                                    ${new Date().toLocaleString()}
+                                </div>
+                                <div>
+                                    <i class="fas fa-comments text-emerald-500 mr-2"></i>
+                                    ${messages.length} messages
                                 </div>
                             </div>
-                            ${conversationHTML}
                         </div>
-                    `;
+                        ${conversationHTML}
+                    </div>
+                `;
 
-                    document.getElementById('chainContainer').insertAdjacentHTML('afterbegin', chainHTML);
-                    chainCount++;
-                    document.getElementById('chainCounter').textContent = 
-                        `System Active - ${chainCount} Chain${chainCount !== 1 ? 's' : ''} Processed`;
-                    
-                    input.value = '';
-                } catch (error) {
-                    console.error('Error:', error);
-                    alert('Failed to process email chain. Please try again.');
-                } finally {
-                    toggleLoading(false);
-                }
+                document.getElementById('chainContainer').insertAdjacentHTML('afterbegin', chainHTML);
+                chainCount++;
+                document.getElementById('chainCounter').textContent = 
+                    `System Active - ${chainCount} Chain${chainCount !== 1 ? 's' : ''} Processed`;
+                
+                input.value = '';
+            } catch (error) {
+                console.error('Error:', error);
+                alert(`Failed to process email chain: ${error.message}`);
+            } finally {
+                toggleLoading(false);
             }
         }
 
@@ -321,6 +348,10 @@
 
                 if (error) throw error;
 
+                if (!data || !Array.isArray(data)) {
+                    throw new Error('Invalid data received from server');
+                }
+
                 chainCount = data.length;
                 
                 const chainsHTML = data.map((chain, index) => {
@@ -331,7 +362,7 @@
                                 <i class="fas ${idx % 2 === 0 ? 'fa-arrow-right' : 'fa-arrow-left'} mr-2"></i>
                                 Message ${idx + 1}
                             </div>
-                            <div class="message-content">${msg}</div>
+                            <div class="message-content">${sanitizeHTML(msg)}</div>
                         </div>
                     `).join('');
 
@@ -362,7 +393,7 @@
                     `System Active - ${chainCount} Chain${chainCount !== 1 ? 's' : ''} Processed`;
             } catch (error) {
                 console.error('Error:', error);
-                document.getElementById('chainCounter').textContent = 'System Error - Failed to load chains';
+                document.getElementById('chainCounter').textContent = `System Error - ${error.message}`;
             } finally {
                 toggleLoading(false);
             }
