@@ -1,304 +1,219 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Email Conversation Analyzer</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/dist/umd/supabase.min.js"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
-
-        body {
-            background: #000000;
-            background-image: 
-                radial-gradient(circle at center, #10b98133 0%, transparent 40%),
-                linear-gradient(to bottom, #000000, #0a1118);
-            font-family: 'Inter', sans-serif;
-            color: #e2e8f0;
-            min-height: 100vh;
-        }
-
-        .tech-header {
-            font-family: 'Orbitron', sans-serif;
-        }
-
-        .tech-card {
-            background: rgba(17, 24, 39, 0.7);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(16, 185, 129, 0.2);
-            transition: all 0.3s ease;
-        }
-
-        .message-block {
-            padding: 1.5rem;
-            margin: 1rem 0;
-            border-radius: 12px;
-            position: relative;
-            max-width: 90%;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        }
-
-        .message-sent {
-            background: rgba(6, 78, 59, 0.4);
-            border: 1px solid rgba(16, 185, 129, 0.3);
-            margin-left: auto;
-            margin-right: 2rem;
-        }
-
-        .message-received {
-            background: rgba(31, 41, 55, 0.4);
-            border: 1px solid rgba(75, 85, 99, 0.3);
-            margin-right: auto;
-            margin-left: 2rem;
-        }
-
-        .message-arrow {
-            position: absolute;
-            top: 1rem;
-            width: 0;
-            height: 0;
-            border: 8px solid transparent;
-        }
-
-        .message-sent .message-arrow {
-            right: -16px;
-            border-left-color: rgba(16, 185, 129, 0.3);
-        }
-
-        .message-received .message-arrow {
-            left: -16px;
-            border-right-color: rgba(75, 85, 99, 0.3);
-        }
-
-        .tech-input {
-            background: rgba(31, 41, 55, 0.5);
-            border: 1px solid rgba(16, 185, 129, 0.2);
-            color: #e5e7eb;
-            transition: all 0.3s ease;
-            font-family: 'Inter', sans-serif;
-            font-size: 1.1rem;
-            line-height: 1.7;
-        }
-
-        .tech-input:focus {
-            border-color: #10b981;
-            box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
-            outline: none;
-        }
-
-        .cyber-button {
-            --button-bg: #064e3b;
-            --button-border: #10b981;
-            --button-glow: rgba(16, 185, 129, 0.4);
-            width: 100%;
-            background: var(--button-bg);
-            border: 2px solid var(--button-border);
-            border-radius: 12px;
-            padding: 1rem;
-            color: #ecfdf5;
-            font-family: 'Orbitron', sans-serif;
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            position: relative;
-            overflow: hidden;
-            transition: all 0.3s ease;
-        }
-
-        .cyber-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 0 15px var(--button-glow);
-        }
-
-        .button-content {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-        }
-
-        .loading {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.8);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            backdrop-filter: blur(5px);
-        }
-
-        .loading-content {
-            text-align: center;
-            color: #10b981;
-            font-family: 'Orbitron', sans-serif;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .loading-spinner {
-            animation: spin 1s linear infinite;
-        }
-    </style>
-</head>
-<body class="p-4 md:p-8">
-    <div id="loading" class="loading hidden">
-        <div class="loading-content">
-            <i class="fas fa-circle-notch fa-spin fa-3x mb-4"></i>
-            <div class="text-lg mt-4">Processing Data...</div>
-        </div>
-    </div>
-
-    <div class="max-w-5xl mx-auto">
-        <!-- Header -->
-        <div class="tech-card rounded-2xl p-6 mb-8">
-            <div class="flex items-center mb-6">
-                <i class="fas fa-microchip text-3xl text-emerald-500 mr-4"></i>
-                <div>
-                    <h1 class="text-3xl font-bold tech-header text-emerald-400 mb-1">Email Analysis System</h1>
-                    <div class="text-sm text-gray-400">
-                        <i class="fas fa-clock mr-2"></i>
-                        <span>System Time: <span id="currentTime">00:00:00</span></span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="space-y-4">
-                <textarea 
-                    id="emailInput" 
-                    class="tech-input w-full h-48 p-6 rounded-xl"
-                    placeholder="Input email data for analysis..."
-                ></textarea>
-
-                <button onclick="processEmail()" class="cyber-button">
-                    <div class="button-content">
-                        <i class="fas fa-microchip"></i>
-                        <span>Process Email Chain</span>
-                        <i class="fas fa-arrow-right"></i>
-                    </div>
-                </button>
-            </div>
-        </div>
-
-        <!-- Stats -->
-        <div class="text-center mb-8">
-            <span id="chainCounter" class="tech-header text-emerald-400 text-xl font-medium">
-                System Ready - Loading Chains...
-            </span>
-        </div>
-
-        <!-- Chains Container -->
-        <div id="chainContainer" class="space-y-8">
-            <!-- Email chains will appear here -->
-        </div>
-    </div>
-
-    <script>
-        // Initialize Supabase client correctly
-        const { createClient } = supabase;
-        const supabaseClient = createClient(
-            'https://zhodxnwzlxpmywnsokts.supabase.co',
-            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpob2R4bnd6bHhwbXl3bnNva3RzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzA5NjAyNzUsImV4cCI6MjA0NjUzNjI3NX0.tomM3nzGpKRJ4pxC4O9s-QgInRf1eI-JtpYxQEiC3Lk'
-        );
-
-        let chainCount = 0;
-
-        function updateClock() {
-            const now = new Date();
-            document.getElementById('currentTime').textContent = 
-                now.toLocaleTimeString('en-US', { hour12: false });
-        }
-        setInterval(updateClock, 1000);
-        updateClock();
-
-        function toggleLoading(show) {
-            const loadingElement = document.getElementById('loading');
-            if (show) {
-                loadingElement.classList.remove('hidden');
-            } else {
-                loadingElement.classList.add('hidden');
-            }
-        }
-
-        function sanitizeHTML(str) {
-            const div = document.createElement('div');
-            div.textContent = str;
-            return div.innerHTML;
-        }
-
-        function cleanEmail(text) {
-            if (!text) return [];
-            
-            let messages = text.split(/(?=On [A-Za-z]{3},? [A-Za-z]{3} \d{1,2}, \d{4}|On \d{1,2}\/\d{1,2}\/\d{2,4}|From:|Begin forwarded message:|>)/g);
-            
-            return messages.map(msg => {
-                if (!msg.trim()) return '';
-                
-                msg = msg
-                    .replace(/^(From|To|Sent|Date|Subject|Cc|Bcc):.*$/gm, '')
-                    .replace(/Begin forwarded message:.*$/gm, '')
-                    .replace(/On .* wrote:$/gm, '')
-                    .replace(/On .* at .*, .* wrote:$/gm, '')
-                    .replace(/^--\s*\n[\s\S]*?(?=\n|$)/gm, '')
-                    .replace(/Best regards,[\s\S]*?(?=\n|$)/gim, '')
-                    .replace(/Regards,[\s\S]*?(?=\n|$)/gim, '')
-                    .replace(/Thank you,[\s\S]*?(?=\n|$)/gim, '')
-                    .replace(/Thanks,[\s\S]*?(?=\n|$)/gim, '')
-                    .replace(/^>+\s*/gm, '')
-                    .replace(/This email and any attachments.*$/gm, '')
-                    .replace(/CONFIDENTIALITY NOTICE:.*$/gm, '')
-                    .replace(/Disclaimer:.*$/gm, '')
-                    .replace(/\n{3,}/g, '\n\n');
-                    
-                return msg.trim();
-            }).filter(msg => msg.length > 0);
-        }
-
-        async function checkSupabaseConnection() {
-            try {
-                const { data, error } = await supabaseClient.from('email_chains').select('count');
-                if (error) throw error;
-                console.log('Supabase connection successful');
-            } catch (error) {
-                console.error('Supabase connection error:', error);
-                document.getElementById('chainCounter').textContent = 'System Error - Database connection failed';
-            }
-        }
-
-        async function processEmail() {
-            const input = document.getElementById('emailInput');
-            const content = input.value.trim();
-            
-            if (!content) {
-                alert('Please enter email content');
-                return;
-            }
-
-            toggleLoading(true);
-            
-            try {
-                const messages = cleanEmail(content);
-                
-                if (messages.length === 0) {
-                    throw new Error('No valid messages found in the email content');
+<script>
+    // Initialize Supabase client with timeout and retry options
+    const { createClient } = supabase;
+    const supabaseClient = createClient('https://zhodxnwzlxpmywnsokts.supabase.co', 
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpob2R4bnd6bHhwbXl3bnNva3RzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzA5NjAyNzUsImV4cCI6MjA0NjUzNjI3NX0.tomM3nzGpKRJ4pxC4O9s-QgInRf1eI-JtpYxQEiC3Lk', 
+        {
+            auth: {
+                autoRefreshToken: true,
+                persistSession: true,
+                detectSessionInUrl: true
+            },
+            realtime: {
+                timeout: 10000,
+                params: {
+                    eventsPerSecond: 10
                 }
+            }
+        }
+    );
 
-                const { data, error } = await supabaseClient
+    let chainCount = 0;
+
+    // Debug auth state
+    supabaseClient.auth.onAuthStateChange((event, session) => {
+        console.log('Supabase auth event:', event);
+        console.log('Session:', session);
+    });
+
+    function updateClock() {
+        const now = new Date();
+        document.getElementById('currentTime').textContent = 
+            now.toLocaleTimeString('en-US', { hour12: false });
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    function toggleLoading(show) {
+        const loadingElement = document.getElementById('loading');
+        if (show) {
+            loadingElement.classList.remove('hidden');
+            // Add a timeout to automatically hide the loading spinner after 15 seconds
+            setTimeout(() => {
+                if (!loadingElement.classList.contains('hidden')) {
+                    loadingElement.classList.add('hidden');
+                    document.getElementById('chainCounter').textContent = 
+                        'System Error - Operation timed out. Please refresh the page.';
+                }
+            }, 15000);
+        } else {
+            loadingElement.classList.add('hidden');
+        }
+    }
+
+    function sanitizeHTML(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    function cleanEmail(text) {
+        if (!text) return [];
+        
+        let messages = text.split(/(?=On [A-Za-z]{3},? [A-Za-z]{3} \d{1,2}, \d{4}|On \d{1,2}\/\d{1,2}\/\d{2,4}|From:|Begin forwarded message:|>)/g);
+        
+        return messages.map(msg => {
+            if (!msg.trim()) return '';
+            
+            msg = msg
+                .replace(/^(From|To|Sent|Date|Subject|Cc|Bcc):.*$/gm, '')
+                .replace(/Begin forwarded message:.*$/gm, '')
+                .replace(/On .* wrote:$/gm, '')
+                .replace(/On .* at .*, .* wrote:$/gm, '')
+                .replace(/^--\s*\n[\s\S]*?(?=\n|$)/gm, '')
+                .replace(/Best regards,[\s\S]*?(?=\n|$)/gim, '')
+                .replace(/Regards,[\s\S]*?(?=\n|$)/gim, '')
+                .replace(/Thank you,[\s\S]*?(?=\n|$)/gim, '')
+                .replace(/Thanks,[\s\S]*?(?=\n|$)/gim, '')
+                .replace(/^>+\s*/gm, '')
+                .replace(/This email and any attachments.*$/gm, '')
+                .replace(/CONFIDENTIALITY NOTICE:.*$/gm, '')
+                .replace(/Disclaimer:.*$/gm, '')
+                .replace(/\n{3,}/g, '\n\n');
+                
+            return msg.trim();
+        }).filter(msg => msg.length > 0);
+    }
+
+    // Add timeout promise
+    const timeout = (ms) => {
+        return new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Request timed out')), ms)
+        );
+    };
+
+    async function checkSupabaseConnection() {
+        try {
+            const { data, error } = await Promise.race([
+                supabaseClient.from('email_chains').select('count'),
+                timeout(5000)
+            ]);
+            if (error) throw error;
+            console.log('Supabase connection successful');
+        } catch (error) {
+            console.error('Supabase connection error:', error);
+            document.getElementById('chainCounter').textContent = 'System Error - Database connection failed';
+            throw error;
+        }
+    }
+
+    async function processEmail() {
+        const input = document.getElementById('emailInput');
+        const content = input.value.trim();
+        
+        if (!content) {
+            alert('Please enter email content');
+            return;
+        }
+
+        toggleLoading(true);
+        
+        try {
+            const messages = cleanEmail(content);
+            
+            if (messages.length === 0) {
+                throw new Error('No valid messages found in the email content');
+            }
+
+            const { data, error } = await Promise.race([
+                supabaseClient
                     .from('email_chains')
                     .insert([{
                         content: { original: content },
                         messages: messages
                     }])
-                    .select();
+                    .select(),
+                timeout(10000)
+            ]);
 
-                if (error) throw error;
+            if (error) throw error;
 
-                const conversationHTML = messages.map((msg, idx) => `
+            const conversationHTML = messages.map((msg, idx) => `
+                <div class="message-block ${idx % 2 === 0 ? 'message-received' : 'message-sent'}">
+                    <div class="message-arrow"></div>
+                    <div class="text-sm text-emerald-400 mb-2">
+                        <i class="fas ${idx % 2 === 0 ? 'fa-arrow-right' : 'fa-arrow-left'} mr-2"></i>
+                        Message ${idx + 1}
+                    </div>
+                    <div class="message-content">${sanitizeHTML(msg)}</div>
+                </div>
+            `).join('');
+
+            const chainHTML = `
+                <div class="tech-card rounded-xl p-8" id="chain-${chainCount + 1}">
+                    <div class="mb-6 pb-4 border-b border-emerald-900">
+                        <h3 class="text-2xl font-bold tech-header text-emerald-400 mb-2">
+                            Conversation ${chainCount + 1}
+                        </h3>
+                        <div class="flex items-center text-sm text-gray-400 space-x-4">
+                            <div>
+                                <i class="fas fa-clock text-emerald-500 mr-2"></i>
+                                ${new Date().toLocaleString()}
+                            </div>
+                            <div>
+                                <i class="fas fa-comments text-emerald-500 mr-2"></i>
+                                ${messages.length} messages
+                            </div>
+                        </div>
+                    </div>
+                    ${conversationHTML}
+                </div>
+            `;
+
+            document.getElementById('chainContainer').insertAdjacentHTML('afterbegin', chainHTML);
+            chainCount++;
+            document.getElementById('chainCounter').textContent = 
+                `System Active - ${chainCount} Chain${chainCount !== 1 ? 's' : ''} Processed`;
+            
+            input.value = '';
+        } catch (error) {
+            console.error('Error:', error);
+            alert(`Failed to process email chain: ${error.message}`);
+        } finally {
+            toggleLoading(false);
+        }
+    }
+
+    async function loadChains() {
+        toggleLoading(true);
+        
+        try {
+            const result = await Promise.race([
+                supabaseClient
+                    .from('email_chains')
+                    .select('*')
+                    .order('created_at', { ascending: false }),
+                timeout(10000)
+            ]);
+
+            if (!result || !result.data) {
+                throw new Error('No data received from database');
+            }
+
+            const { data, error } = result;
+
+            if (error) throw error;
+
+            chainCount = data.length;
+            
+            if (data.length === 0) {
+                document.getElementById('chainCounter').textContent = 'System Ready - No chains found';
+                document.getElementById('chainContainer').innerHTML = '';
+                return;
+            }
+
+            const chainsHTML = data.map((chain, index) => {
+                const conversationHTML = chain.messages.map((msg, idx) => `
                     <div class="message-block ${idx % 2 === 0 ? 'message-received' : 'message-sent'}">
                         <div class="message-arrow"></div>
                         <div class="text-sm text-emerald-400 mb-2">
@@ -309,111 +224,64 @@
                     </div>
                 `).join('');
 
-                const chainHTML = `
-                    <div class="tech-card rounded-xl p-8" id="chain-${chainCount + 1}">
+                return `
+                    <div class="tech-card rounded-xl p-8" id="chain-${index + 1}">
                         <div class="mb-6 pb-4 border-b border-emerald-900">
                             <h3 class="text-2xl font-bold tech-header text-emerald-400 mb-2">
-                                Conversation ${chainCount + 1}
+                                Conversation ${index + 1}
                             </h3>
                             <div class="flex items-center text-sm text-gray-400 space-x-4">
                                 <div>
                                     <i class="fas fa-clock text-emerald-500 mr-2"></i>
-                                    ${new Date().toLocaleString()}
+                                    ${new Date(chain.created_at).toLocaleString()}
                                 </div>
                                 <div>
                                     <i class="fas fa-comments text-emerald-500 mr-2"></i>
-                                    ${messages.length} messages
+                                    ${chain.messages.length} messages
                                 </div>
                             </div>
                         </div>
                         ${conversationHTML}
                     </div>
                 `;
+            }).join('');
 
-                document.getElementById('chainContainer').insertAdjacentHTML('afterbegin', chainHTML);
-                chainCount++;
-                document.getElementById('chainCounter').textContent = 
-                    `System Active - ${chainCount} Chain${chainCount !== 1 ? 's' : ''} Processed`;
-                
-                input.value = '';
-            } catch (error) {
-                console.error('Error:', error);
-                alert(`Failed to process email chain: ${error.message}`);
-            } finally {
-                toggleLoading(false);
-            }
+            document.getElementById('chainContainer').innerHTML = chainsHTML;
+            document.getElementById('chainCounter').textContent = 
+                `System Active - ${chainCount} Chain${chainCount !== 1 ? 's' : ''} Processed`;
+
+        } catch (error) {
+            console.error('Error:', error);
+            document.getElementById('chainCounter').textContent = `System Error - ${error.message}`;
+            document.getElementById('chainContainer').innerHTML = 
+                '<div class="tech-card rounded-xl p-8 text-center text-red-500">Failed to load data. Please refresh the page.</div>';
+        } finally {
+            toggleLoading(false);
         }
+    }
 
-        async function loadChains() {
-            toggleLoading(true);
-            
+    async function initializeApp(maxRetries = 3) {
+        let retries = 0;
+        
+        while (retries < maxRetries) {
             try {
-                const { data, error } = await supabaseClient
-                    .from('email_chains')
-                    .select('*')
-                    .order('created_at', { ascending: false });
-
-                if (error) throw error;
-
-                chainCount = data ? data.length : 0;
-                
-                if (!data || data.length === 0) {
-                    document.getElementById('chainCounter').textContent = 'System Ready - No chains found';
-                    document.getElementById('chainContainer').innerHTML = '';
-                    return;
-                }
-
-                const chainsHTML = data.map((chain, index) => {
-                    const conversationHTML = chain.messages.map((msg, idx) => `
-                        <div class="message-block ${idx % 2 === 0 ? 'message-received' : 'message-sent'}">
-                            <div class="message-arrow"></div>
-                            <div class="text-sm text-emerald-400 mb-2">
-                                <i class="fas ${idx % 2 === 0 ? 'fa-arrow-right' : 'fa-arrow-left'} mr-2"></i>
-                                Message ${idx + 1}
-                            </div>
-                            <div class="message-content">${sanitizeHTML(msg)}</div>
-                        </div>
-                    `).join('');
-
-                    return `
-                        <div class="tech-card rounded-xl p-8" id="chain-${index + 1}">
-                            <div class="mb-6 pb-4 border-b border-emerald-900">
-                                <h3 class="text-2xl font-bold tech-header text-emerald-400 mb-2">
-                                    Conversation ${index + 1}
-                                </h3>
-                                <div class="flex items-center text-sm text-gray-400 space-x-4">
-                                    <div>
-                                        <i class="fas fa-clock text-emerald-500 mr-2"></i>
-                                        ${new Date(chain.created_at).toLocaleString()}
-                                    </div>
-                                    <div>
-                                        <i class="fas fa-comments text-emerald-500 mr-2"></i>
-                                        ${chain.messages.length} messages
-                                    </div>
-                                </div>
-                            </div>
-                            ${conversationHTML}
-                        </div>
-                    `;
-                }).join('');
-
-                document.getElementById('chainContainer').innerHTML = chainsHTML;
-                document.getElementById('chainCounter').textContent = 
-                    `System Active - ${chainCount} Chain${chainCount !== 1 ? 's' : ''} Processed`;
+                await checkSupabaseConnection();
+                await loadChains();
+                return;
             } catch (error) {
-                console.error('Error:', error);
-                document.getElementById('chainCounter').textContent = `System Error - ${error.message}`;
-                document.getElementById('chainContainer').innerHTML = '';
-            } finally {
-                toggleLoading(false);
+                retries++;
+                console.error(`Connection attempt ${retries} failed:`, error);
+                if (retries === maxRetries) {
+                    document.getElementById('chainCounter').textContent = 'System Error - Could not connect to database';
+                    toggleLoading(false);
+                }
+                await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds before retrying
             }
         }
+    }
 
-        // Initialize the app when the DOM is loaded
-        document.addEventListener('DOMContentLoaded', async () => {
-            await checkSupabaseConnection();
-            await loadChains();
-        });
-    </script>
-</body>
-</html>
+    // Initialize the app with the new retry mechanism
+    document.addEventListener('DOMContentLoaded', () => {
+        initializeApp();
+    });
+</script>
